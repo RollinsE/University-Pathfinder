@@ -1,0 +1,46 @@
+name: Web app
+
+# Publishes webapp/ to GitHub Pages. Enable Pages with "GitHub Actions" as the source
+# (Settings > Pages) once the exported models are committed to webapp/models/.
+
+on:
+  push:
+    branches: [master, main]
+    paths: ["webapp/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check the models are present
+        id: models
+        run: |
+          if [ -f webapp/models/manifest.json ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No exported models yet; skipping deploy. Run --mode export and commit webapp/models/."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.models.outputs.ready == 'true'
+        uses: actions/configure-pages@v5
+      - if: steps.models.outputs.ready == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: webapp
+      - if: steps.models.outputs.ready == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4

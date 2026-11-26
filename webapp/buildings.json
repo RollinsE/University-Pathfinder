@@ -1,0 +1,10 @@
+{
+  "christchurch_house": {"mapsQuery": "Christchurch House, Bournemouth University, Talbot Campus", "description": ""},
+  "dorset_house": {"mapsQuery": "Dorset House, Bournemouth University, Talbot Campus", "description": "", "lat": 50.743139, "lng": -1.895722},
+  "fusion_building": {"mapsQuery": "Fusion Building, Bournemouth University, Talbot Campus", "description": ""},
+  "kimmeridge_house": {"mapsQuery": "Kimmeridge House, Bournemouth University, Talbot Campus", "description": ""},
+  "poole_gateway_building": {"mapsQuery": "Poole Gateway Building, Bournemouth University, Talbot Campus", "description": ""},
+  "poole_house": {"mapsQuery": "Poole House, Bournemouth University, Talbot Campus", "description": "", "lat": 50.743403, "lng": -1.896916},
+  "sir_michael_cobham_library": {"mapsQuery": "Sir Michael Cobham Library, Bournemouth University, Talbot Campus", "description": "", "lat": 50.742638, "lng": -1.895957},
+  "weymouth_house": {"mapsQuery": "Weymouth House, Bournemouth University, Talbot Campus", "description": ""}
+}

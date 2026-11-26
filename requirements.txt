@@ -1,0 +1,19 @@
+# Everything needed to train, evaluate and export locally (CPU or GPU).
+# On Google Colab install requirements-colab.txt instead; Colab already has PyTorch.
+torch>=2.2
+torchvision>=0.17
+ultralytics>=8.3.0  # YOLO11
+numpy>=1.24
+pandas>=2.0
+pillow>=10.0
+pyyaml>=6.0
+requests>=2.31
+tqdm>=4.66
+plotly>=6.1  # figures
+kaleido>=1.0  # PNG export of the figures (needs Chrome: plotly_get_chrome -y)
+
+# ONNX export for the web app, and onnxruntime for checks, timings and --mode predict.
+onnx>=1.16
+onnxruntime>=1.18
+onnxscript>=0.1  # used by newer PyTorch ONNX exporters
+onnxslim>=0.1.82  # used by Ultralytics to simplify the ONNX export

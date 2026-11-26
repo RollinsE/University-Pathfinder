@@ -1,103 +1,207 @@
-# Bournemouth University Campus Pathfinder
+# Campus Pathfinder
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg)
-![YOLOv5](https://img.shields.io/badge/YOLO-v5-%2300A98F)
-![License](https://img.shields.io/badge/License-MIT-green)
+![CI](https://github.com/RollinsE/University-Pathfinder/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/RollinsE/University-Pathfinder/blob/master/notebooks/colab.ipynb)
 
-A computer vision project aimed at detecting and classifying buildings on Bournemouth University's Talbot Campus. This repository contains the code for a two-step ResNet-based classifier/detector and a state-of-the-art YOLOv5 object detection model, trained to recognize eight key buildings under varying conditions.
+Take a photo of a building on Bournemouth University's Talbot Campus and Campus Pathfinder tells
+you which one it is. It recognises eight buildings, by day and at night, and runs entirely in the
+browser, so photos never leave the phone.
 
-**Live Demo (Google Colab):** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/your_username/bu-campus-pathfinder/blob/main/Bournemouth_University_Campus_Pathfinder.ipynb)
+**Try it:** https://rollinse.github.io/University-Pathfinder/
 
----
+The repository trains and compares three models on the same photos:
 
-## 📖 Project Overview
+- **YOLO11n**, a detector that finds and labels every building in the photo. This is what the web
+  app uses.
+- **ResNet18**, a baseline classifier that names the main building and draws a box round it.
+- **MobileNetV3-Large**, a smaller, faster classifier that does the same.
 
-Navigating a university campus can be challenging for new students and visitors. Static maps lack the dynamic, context-aware capabilities needed for intuitive wayfinding. This project lays the groundwork for an AI-powered "Campus Pathfinder" application that could use a smartphone's camera and GPS to identify nearby buildings and provide navigation cues.
+## Results
 
-The core objective was to develop a robust model capable of detecting and classifying the following eight buildings with high accuracy:
-- Poole House
-- The Sir Michael Cobham Library
-- Kimmeridge House
-- Dorset House
-- Weymouth House
-- The Fusion Building
-- Christchurch House
-- Poole Gateway Building
+All three models are scored on the same 21 held-out test photos. For the detector, its most
+confident box counts as its answer.
 
----
+| Model | Test accuracy | Box IoU | mAP50-95 | Parameters | ONNX size |
+|---|---:|---:|---:|---:|---:|
+| YOLO11n | 21/21 | 0.91 | 0.77 | 2.6 M | 10.7 MB |
+| ResNet18 | 21/21 | 0.77 | | 11.3 M | 45.2 MB |
+| MobileNetV3-Large | 21/21 | 0.79 | | 4.5 M | 18.2 MB |
 
-## 🧪 Technical Approach
+With only 21 test photos, a perfect score still leaves a 95% confidence range of roughly 85–100%,
+so the test set can't separate the models on accuracy. The detector is the better choice for the
+app for other reasons: it draws the tightest boxes, it can name several buildings in one photo,
+and it can say when it finds none. The classifiers always give exactly one answer, which works
+for a photo of one building but not for a wide view of the campus.
 
-We implemented and compared two distinct deep-learning paradigms:
+The full table, including F1, top-3 accuracy, mAP50 and CPU time per photo, is written to
+`runs/<run>/metrics/results.md` at the end of each run.
 
-### 1. Two-Step Classification & Detection (ResNet-Based)
-- **Step 1: Image Classification:** Benchmarking of multiple pre-trained architectures (ResNet18, 34, 50, 101, EfficientNet-B0) to identify the most effective backbone for our dataset.
-- **Step 2: Bounding Box Regression:** Extending the best classifier (ResNet18) with a custom detection head to perform simultaneous classification and bounding box prediction. The dataset was converted into a Pascal VOC-like format for this task.
+### Known limitations
 
-### 2. End-to-End Object Detection (YOLOv5)
-- Fine-tuning the pre-trained `YOLOv5s` model on our custom dataset.
-- Two training regimens were compared:
-  - **Base Model:** Trained on the original annotated dataset.
-  - **Augmented Model:** Trained on a 3x augmented dataset (using Roboflow) with transformations like shear, rotation, and brightness adjustments to improve robustness to real-world variance.
+- The test set is small, so treat the scores as a rough guide rather than a precise measure.
+- Photos from unusual angles, such as aerial views or buildings half hidden behind trees, are
+  harder. The detector usually still finds the building but with lower confidence.
+- Poole House and the Fusion Building are the pair most often confused.
+- All photos come from one collection period, so new signage, scaffolding or building work may
+  affect results.
 
----
+## Getting started
 
-## 🗃️ Dataset
+You need Python 3.10 or later.
 
-The project utilized a meticulously curated dataset:
-- **Total Images:** 256
-- **Class Balance:** 32 images per building (16 daytime, 16 nighttime)
-- **Challenges:** Includes occlusions (trees, structures) and varying viewpoints to enhance model robustness.
-- **Annotation:** Annotations were created using the VGG Image Annotator (VIA), initially including occlusions but finalized with a focus on the primary building subject.
+```bash
+pip install -r requirements-dev.txt
+python scripts/doctor.py        # checks your setup
+python -m pytest
+```
 
-*Example of a night image with occlusion:*
-![Sir Michael Cobham Library at Night](images/lib_night_occluded.jpg)
+To see the whole pipeline work without an account or a GPU, run it on synthetic data. It takes a
+few minutes on a laptop:
 
----
+```bash
+python main.py --mode all --demo
+python -m http.server 8000 --directory runs/demo_webapp
+```
 
-## 🚀 Key Results & Findings
+To train on the real photos, create a free Roboflow account and put your API key in `.env` (copy
+`.env.example`) or in the `ROBOFLOW_API_KEY` environment variable. Training is much faster on a
+GPU.
 
-| Model | Key Strength | Key Weakness | Best Use Case |
-| :--- | :--- | :--- | :--- |
-| **ResNet-18 Classifier** | High validation accuracy; good generalizability on isolated building images. | Treats classification as mutually exclusive; cannot detect multiple buildings. | Simple, fast classification where the subject building is the clear focus. |
-| **Custom ResNet-18 Detector** | Successful proof-of-concept for a unified classification and detection pipeline. | Poor convergence on bounding box regression; high and unstable validation loss. | Academic exploration of multi-task learning. Not suitable for deployment. |
-| **YOLOv5 (Base)** | High precision (>99.5% on several classes); fast inference. | Struggled with heavy occlusions and night images. | Scenarios with clear, unobstructed views of buildings. |
-| **YOLOv5 (Augmented)** | **Superior overall performance.** Excellent robustness to night conditions and occlusions. | Slight confusion between architecturally similar buildings (e.g., Fusion & Weymouth). | **Real-world deployment.** Handles the varied conditions of a live campus environment. |
+```bash
+python main.py --mode all --figures_dir docs/figures
+```
 
-**Conclusion:** The **YOLOv5 model trained on augmented data** was identified as the most viable model for a future pathfinding application due to its high accuracy, robustness, and native efficiency in object detection.
+### Running stages separately
 
----
+Each stage can be run on its own, writing into the same run folder:
 
-## 🛠️ Installation & Usage
+```bash
+python main.py --mode acquire  --run_dir runs/run_a
+python main.py --mode classify --run_dir runs/run_a
+python main.py --mode detect   --run_dir runs/run_a
+python main.py --mode export   --run_dir runs/run_a
+python main.py --mode evaluate --run_dir runs/run_a --figures_dir docs/figures
+```
 
-### Prerequisites
-- Python 3.8+
-- PyTorch 1.12+
-- Google Colab (recommended for easy replication) or a local GPU environment.
+| Mode | What it does |
+|---|---|
+| `acquire` | Downloads the dataset from Roboflow and prepares it for training |
+| `classify` | Trains and tests ResNet18 and MobileNetV3-Large |
+| `detect` | Trains and tests YOLO11n |
+| `export` | Converts the models to ONNX, checks and times them, and builds the web app's model list |
+| `evaluate` | Writes the results table and figures |
+| `predict` | Runs one photo through the exported models and saves a labelled copy |
+| `all` | Runs everything from `acquire` to `evaluate` |
 
-### Quick Start (Using Google Colab)
-The entire project pipeline is contained within a single Jupyter notebook.
+To try a photo of your own:
 
-1.  Clone the repository and open the notebook in Colab:
-    ```bash
-    git clone https://github.com/your_username/bu-campus-pathfinder.git
-    cd bu-campus-pathfinder
-    ```
-2.  Open `Bournemouth_University_Campus_Pathfinder.ipynb` in **Google Colab**.
-3.  Run the cells sequentially. The notebook will handle dependency installation, data downloading, and model training.
+```bash
+python main.py --mode predict --image photo.jpg --model all
+```
 
-### Running Inference with the Trained YOLO Model
-To test the best-performing model on your own image:
-```python
-import torch
+Run `python main.py --help` for every option. A few useful ones:
 
-# Load the custom trained model
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='path/to/best_augmented_weights.pt')
+- `--workspace`, `--project` and `--version` choose the Roboflow dataset.
+- `--overwrite` retrains models that already exist in the run folder.
+- `--device cuda` refuses to start without a GPU, rather than quietly training on the CPU.
 
-# Perform inference
-results = model('path/to/your/test_image.jpg')
+Interrupted training picks up from the last finished epoch when you run the same command again,
+and models that have already finished are reused.
 
-# Show results
-results.show()
-results.pandas().xyxy[0]  # Pandas DataFrame of results
+### Google Colab
+
+[notebooks/colab.ipynb](notebooks/colab.ipynb) runs the full pipeline on a Colab GPU. Add
+`ROBOFLOW_API_KEY` as a Colab secret, set the options in the first cell and choose **Run all**. It
+asks you to upload the repository as a zip, runs a short smoke test, and saves everything to
+Google Drive, so a dropped session can carry on where it stopped. To save compute units, you can
+run the setup and download on a free CPU runtime first by setting `PREPARE_ONLY = True`.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Roboflow dataset] --> B[Prepare]
+    B --> C[ResNet18]
+    B --> D[MobileNetV3-Large]
+    B --> E[YOLO11n]
+    C --> F[Test and compare]
+    D --> F
+    E --> F
+    F --> G[ONNX export]
+    G --> H[Web app]
+```
+
+The eight buildings are defined once, in `src/constants.py`. When the dataset is prepared, its
+labels are matched to that list by name, so every model and the web app agree on which number
+means which building.
+
+The classifiers are ImageNet-pretrained backbones with two small heads: one picks the building and
+the other predicts a single box. They are trained on the building with the largest box in each
+photo. YOLO11n starts from COCO weights and learns every labelled box.
+
+All models are tested on photos they never saw during training, and those photos are not used to
+choose the best checkpoint either. After export, each ONNX model is run once to check it gives
+the same answers as the original and timed on a CPU.
+
+Every run writes a single log file, `runs/<run>/logs/run.log`, and a shorter, readable version to
+the console. [docs/LOGGING.md](docs/LOGGING.md) explains the format.
+
+### Figures
+
+`--mode evaluate` draws four kinds of figure with Plotly: test accuracy for each model, speed
+against download size, training curves, and a confusion matrix for each model. They are saved as
+interactive HTML in `runs/<run>/plots/`. With `--figures_dir`, light and dark PNG versions are
+written there too.
+
+#### PNG export
+
+The PNGs are drawn by Kaleido, which needs a headless Chrome. Install it with
+`plotly_get_chrome -y` (the Colab notebook does this for you). If it can't run, the HTML figures
+are still written and the log says why.
+
+## Web app
+
+The web app is a single static page designed for phones. You take or upload a photo, or tap one of
+the samples, and it boxes and names the buildings and says in plain words how sure it is. A
+comparison panel runs the same photo through all three models.
+
+```bash
+make serve    # http://localhost:8000, after running --mode export
+```
+
+[docs/WEB_APP.md](docs/WEB_APP.md) covers the design and how to publish it with GitHub Pages.
+
+## Repository layout
+
+```text
+main.py            command-line entry point
+src/               the pipeline: data, training, evaluation, export, logging
+webapp/            the browser app
+notebooks/         the Colab notebook (generated by scripts/build_notebook.py)
+scripts/           setup check and notebook builder
+tests/             Python and JavaScript tests
+docs/              logging, model card, data card, web app notes, figures
+```
+
+## Data
+
+The photos and labels are on
+[Roboflow Universe](https://universe.roboflow.com/computer-vision-6ydhl/bu-building-dectection).
+They are downloaded when needed and never committed to this repository. See
+[docs/DATA_CARD.md](docs/DATA_CARD.md) for the dataset and
+[docs/MODEL_CARD.md](docs/MODEL_CARD.md) for how the models were trained and tested.
+
+## Credits
+
+Campus Pathfinder started as a group coursework project at Bournemouth University. The project
+team photographed and labelled the buildings, published the dataset and compared ResNet
+classifiers with a YOLOv5 detector. Rollins Edeh developed it into the pipeline and web app in
+this repository. See [NOTICE.md](NOTICE.md).
+
+## License
+
+The code is released under the MIT License; see [LICENSE](LICENSE). YOLO11 is trained with
+Ultralytics, which is licensed under AGPL-3.0. [NOTICE.md](NOTICE.md) explains what that means
+for the trained detector.

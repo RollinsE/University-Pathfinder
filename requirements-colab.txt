@@ -1,0 +1,9 @@
+# Google Colab: PyTorch, torchvision, numpy, pandas, Pillow, requests, tqdm and
+# PyYAML come preinstalled. This adds the rest.
+ultralytics>=8.3.0
+onnx>=1.16
+onnxruntime>=1.18
+onnxscript>=0.1
+onnxslim>=0.1.82  # used by Ultralytics to simplify the ONNX export
+plotly>=6.1
+kaleido>=1.0
