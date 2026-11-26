@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Install CPU PyTorch, then the rest
+        run: |
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python scripts/doctor.py
+      - run: python -m pytest
+      - run: node --test "webapp/tests/*.test.mjs"
+      - name: Demo pipeline (classifiers only)
+        run: python main.py --mode all --demo --models resnet18,mobilenet_v3_large --epochs 1 --no_plots

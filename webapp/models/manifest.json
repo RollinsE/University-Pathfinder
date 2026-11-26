@@ -1,0 +1,134 @@
+{
+  "generated": "2026-11-26T16:47:18Z",
+  "run": "colab3_yolo",
+  "primary": "yolo11n",
+  "classes": [
+    {
+      "id": 0,
+      "slug": "christchurch_house",
+      "name": "Christchurch House"
+    },
+    {
+      "id": 1,
+      "slug": "dorset_house",
+      "name": "Dorset House"
+    },
+    {
+      "id": 2,
+      "slug": "fusion_building",
+      "name": "Fusion Building"
+    },
+    {
+      "id": 3,
+      "slug": "kimmeridge_house",
+      "name": "Kimmeridge House"
+    },
+    {
+      "id": 4,
+      "slug": "poole_gateway_building",
+      "name": "Poole Gateway Building"
+    },
+    {
+      "id": 5,
+      "slug": "poole_house",
+      "name": "Poole House"
+    },
+    {
+      "id": 6,
+      "slug": "sir_michael_cobham_library",
+      "name": "Sir Michael Cobham Library"
+    },
+    {
+      "id": 7,
+      "slug": "weymouth_house",
+      "name": "Weymouth House"
+    }
+  ],
+  "models": [
+    {
+      "id": "resnet18",
+      "label": "ResNet18",
+      "role": "baseline classifier + box",
+      "file": "resnet18.onnx",
+      "megabytes": 45.2,
+      "cpu_ms": 31.9,
+      "metrics": {
+        "test_accuracy": 0.9524,
+        "macro_f1": 0.9333
+      },
+      "kind": "classifier",
+      "input": {
+        "size": 224,
+        "resize": "stretch",
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ]
+      },
+      "outputs": {
+        "logits": "class scores",
+        "box": "normalised cx, cy, w, h"
+      }
+    },
+    {
+      "id": "mobilenet_v3_large",
+      "label": "MobileNetV3-Large",
+      "role": "lightweight classifier + box",
+      "file": "mobilenet_v3_large.onnx",
+      "megabytes": 18.2,
+      "cpu_ms": 7.0,
+      "metrics": {
+        "test_accuracy": 1.0,
+        "macro_f1": 1.0
+      },
+      "kind": "classifier",
+      "input": {
+        "size": 224,
+        "resize": "stretch",
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ]
+      },
+      "outputs": {
+        "logits": "class scores",
+        "box": "normalised cx, cy, w, h"
+      }
+    },
+    {
+      "id": "yolo11n",
+      "label": "YOLO11n",
+      "role": "detector",
+      "file": "yolo11n.onnx",
+      "megabytes": 10.7,
+      "cpu_ms": 119.6,
+      "metrics": {
+        "test_accuracy": 1.0,
+        "macro_f1": 1.0,
+        "map50": 0.9668,
+        "map50_95": 0.7672
+      },
+      "kind": "detector",
+      "input": {
+        "size": 640,
+        "fill": 114,
+        "resize": "letterbox"
+      },
+      "conf": 0.25,
+      "iou": 0.45,
+      "one_per_building": true
+    }
+  ]
+}
