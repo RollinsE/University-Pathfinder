@@ -11,6 +11,10 @@ browser, so photos never leave the phone.
 
 **Try it:** https://rollinse.github.io/University-Pathfinder/
 
+<p align="center">
+  <img src="docs/images/app.png" width="320" alt="The web app on a phone, naming the Fusion Building and Weymouth House in a night-time photo">
+</p>
+
 The repository trains and compares three models on the same photos:
 
 - **YOLO11n**, a detector that finds and labels every building in the photo. This is what the web
@@ -37,6 +41,15 @@ for a photo of one building but not for a wide view of the campus.
 
 The full table, including F1, top-3 accuracy, mAP50 and CPU time per photo, is written to
 `runs/<run>/metrics/results.md` at the end of each run.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/training_curves_dark.png">
+  <img src="docs/figures/training_curves_light.png" alt="Validation scores and losses for each epoch of the final run">
+</picture>
+
+YOLO11n kept improving slowly for most of its 250 epochs, and its validation score jumps around
+from one epoch to the next because there are only 45 validation photos. That is why it trains
+with a long patience (75 epochs) before early stopping.
 
 ### Known limitations
 
@@ -120,19 +133,6 @@ run the setup and download on a free CPU runtime first by setting `PREPARE_ONLY 
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A[Roboflow dataset] --> B[Prepare]
-    B --> C[ResNet18]
-    B --> D[MobileNetV3-Large]
-    B --> E[YOLO11n]
-    C --> F[Test and compare]
-    D --> F
-    E --> F
-    F --> G[ONNX export]
-    G --> H[Web app]
-```
-
 The eight buildings are defined once, in `src/constants.py`. When the dataset is prepared, its
 labels are matched to that list by name, so every model and the web app agree on which number
 means which building.
@@ -148,18 +148,10 @@ the same answers as the original and timed on a CPU.
 Every run writes a single log file, `runs/<run>/logs/run.log`, and a shorter, readable version to
 the console. [docs/LOGGING.md](docs/LOGGING.md) explains the format.
 
-### Figures
-
-`--mode evaluate` draws four kinds of figure with Plotly: test accuracy for each model, speed
-against download size, training curves, and a confusion matrix for each model. They are saved as
-interactive HTML in `runs/<run>/plots/`. With `--figures_dir`, light and dark PNG versions are
-written there too.
-
-#### PNG export
-
-The PNGs are drawn by Kaleido, which needs a headless Chrome. Install it with
-`plotly_get_chrome -y` (the Colab notebook does this for you). If it can't run, the HTML figures
-are still written and the log says why.
+`--mode evaluate` also draws the figures: test accuracy, speed against download size, training
+curves and a confusion matrix for each model. They're saved as interactive HTML in
+`runs/<run>/plots/`, and as light and dark PNGs in `--figures_dir` if given. The PNGs need a
+headless Chrome for Kaleido (`plotly_get_chrome -y`); without it you still get the HTML.
 
 ## Web app
 

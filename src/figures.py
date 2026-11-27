@@ -688,7 +688,12 @@ def run_figures(run_dir: str, LOG, export_dir: str | None = None) -> dict:
             except Exception as exc:  # usually Kaleido's Chrome missing, or its system libraries
                 reason = " ".join(f"{type(exc).__name__}: {exc}".split())
                 log_stage(
-                    LOG, "WARN", COMPONENT, png="skipped", reason=reason[:600], fix="see 'PNG export' in README.md"
+                    LOG,
+                    "WARN",
+                    COMPONENT,
+                    png="skipped",
+                    reason=reason[:600],
+                    fix="install Chrome for Kaleido with: plotly_get_chrome -y",
                 )
         log_stage(LOG, "RESULT", COMPONENT, figures=len(light), files=len(written))
     return written
